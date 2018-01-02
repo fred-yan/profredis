@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-import socket
-import threading
 import socketserver
 import json
 import redis
 
 redisclients = {}
+
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
@@ -36,10 +35,14 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
             self.request.sendall(reply)
         except Exception as e:
+            print('connect node %s error %s', node)
             errmessage = ('Read json data error: %s' % str(e))
             response = bytes(errmessage, encoding='utf-8')
+            # delete bad redis connection
+            if node in redisclients:
+                print('remove node %s from redisclients' % node)
+                del redisclients[node]
             self.request.sendall(response)
-
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
